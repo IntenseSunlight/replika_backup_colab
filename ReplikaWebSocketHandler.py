@@ -21,6 +21,7 @@ class ReplikaWebSocketHandler:
         limitdate: Union[bool, str]=None, # False or string date time (e.g. '2022-10-31')
         logger: Callable=print            # logging function
     ):
+        self._logger = logger
         res = json.loads(init)
         self._error_list = []
         self._init = init
@@ -38,8 +39,6 @@ class ReplikaWebSocketHandler:
             except Exception as e:
                 self._logger("Invalid limit date specified; could not parse:", limitdate)
                 raise(e)
-
-        self._logger = logger
 
         self._last_file_id = ""
         self._msg_count = 0
@@ -242,7 +241,7 @@ if __name__ == "__main__":
         )
  
         print('Open websocket to your Replika AI.', end='')
-        #websocket.enableTrace(args.wsdebug)
+        websocket.enableTrace(False)
         ws = websocket.WebSocketApp(
             "wss://ws.replika.ai/v17",
             on_open=ws_handler.on_open,
