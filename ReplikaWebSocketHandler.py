@@ -14,19 +14,20 @@ from typing import Any, Dict, Union, Callable
 class ReplikaWebSocketHandler:
     def __init__(
         self,
-        user_id: Any,                     # obtained from init
-        auth_token: Any,                  # obtained from init
-        device_id: Any,                   # obtained from init
-        chat_id: Any,                     # obtained from init
+        init: str,                        # json string with initialization info
         writer: Any,                      # generic writer which accepts list
+        chat_id: str=None,                # backup, not usually needed
         limitmsgs: Union[bool, int]=None, # False or number of messages
         limitdate: Union[bool, str]=None, # False or string date time (e.g. '2022-10-31')
         logger: Callable=print            # logging function
     ):
-        self._user_id = str(user_id)
-        self._auth_token = str(auth_token)
-        self._device_id = str(device_id)
-        self._chat_id = str(chat_id) 
+        res = json.loads(init)
+        self._init = init
+        self._user_id = str(res['auth']['user_id'])
+        self._auth_token = str(res['auth']['auth_token'])
+        self._device_id = str(res['auth']['device_id'])
+        self._chat_id = chat_id if chat_id else '%x' % (int(self._user_id, 16) - 1)
+
         self._writer = writer
         self._limitmsgs = limitmsgs
 
@@ -200,9 +201,12 @@ class ReplikaWebSocketHandler:
     def on_close(self) -> None:
         self._logger('Connection closed')
 
-    def on_open(self,ws) -> None:
+    def on_open(
+        self,
+        ws: websocket.WebSocket
+    ) -> None:
         def run(*args):
-            ws.send(init)
+            ws.send(self._init)
 
         self._logger('..Ok\nSend init.', end='')
         time.sleep(1)
@@ -228,22 +232,12 @@ if __name__ == "__main__":
 
     # ---------- don't edit anything below -----------
 
-    res = json.loads(init)
-    user_id = res['auth']['user_id']
-    auth_token = res['auth']['auth_token']
-    device_id = res['auth']['device_id']
-    if not chat_id:
-        chat_id = '%x' % (int(user_id, 16) - 1)
-
     with open(f'{file_name}.csv', 'w', newline='', encoding='UTF-8') as csv_file:
         writer = csv.writer(csv_file)
         writer.writerow(['Timestamp', 'From', 'Text', 'Reaction', 'ID'])
 
         ws_handler = ReplikaWebSocketHandler(
-            user_id=user_id,
-            auth_token=auth_token,
-            device_id=device_id,
-            chat_id=chat_id,
+            init=init,
             limitdate=limitdate,
             limitmsgs=limitmsgs,
             writer=writer.writerow,
