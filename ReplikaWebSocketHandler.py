@@ -8,7 +8,7 @@ except ImportError:
 import time
 from dateutil.parser import parse as date_parse
 from datetime import timezone
-from typing import Any, Dict, Union, Callable
+from typing import Any, Dict, List, Union, Callable
 
 
 class ReplikaWebSocketHandler:
@@ -22,6 +22,7 @@ class ReplikaWebSocketHandler:
         logger: Callable=print            # logging function
     ):
         res = json.loads(init)
+        self._error_list = []
         self._init = init
         self._user_id = str(res['auth']['user_id'])
         self._auth_token = str(res['auth']['auth_token'])
@@ -30,7 +31,6 @@ class ReplikaWebSocketHandler:
 
         self._writer = writer
         self._limitmsgs = limitmsgs
-
         self._limitdate = None
         if limitdate is not None:
             try: 
@@ -44,7 +44,9 @@ class ReplikaWebSocketHandler:
         self._last_file_id = ""
         self._msg_count = 0
         self._all_msg_count = 0
-        self._error_count = 0
+    
+    def get_error_list(self) -> List:
+        return self._error_list
     
     def _ws_request(
         self,
@@ -191,12 +193,7 @@ class ReplikaWebSocketHandler:
         ws: websocket.WebSocket, 
         error: Any
     ) -> None:
-        if not repr(error).split('(')[0] == "SystemExit":
-            if self._error_count == 2 or error != "'token'":
-                ws.close()
-                return
-
-            self._error_count += 1
+        self._error_list.append(error)
 
     def on_close(self, *args) -> None:
         self._logger('Connection closed')
@@ -250,7 +247,15 @@ if __name__ == "__main__":
             "wss://ws.replika.ai/v17",
             on_open=ws_handler.on_open,
             on_message=ws_handler.on_message,
-            # on_error = ws_handler.on_error,
+            on_error = ws_handler.on_error,
             on_close=ws_handler.on_close
         )
         ws.run_forever()
+        
+        if runtime_errors := ws_handler.get_error_list():
+            print('During the extraction, the following errors occurred:')
+            for e in runtime_errors:
+                print(e)
+
+        print("Finished!")
+
