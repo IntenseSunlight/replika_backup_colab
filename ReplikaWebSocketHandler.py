@@ -83,7 +83,7 @@ class ReplikaWebSocketHandler:
             if res['payload']['error_message'].find('Authorization failed') > -1:
                 self._logger('\nServer Error: Authorization failed.'
                     '\n\nHint: The Init variable need to be updated inside the script.')
-            elif res['payload']['error_message'].find(f'Device {device_id} not found for user') > -1:
+            elif res['payload']['error_message'].find(f'Device {self._device_id} not found for user') > -1:
                 self._logger('\nServer Error: You are not logged in with this device.'
                     '\n\nHint: The Init variable need to be updated inside the script after login.')
             else:
@@ -116,7 +116,7 @@ class ReplikaWebSocketHandler:
             elif self._last_file_id:
                 limit = 5
 
-            payload = '{"chat_id":"' + str(chat_id) + '","limit":' + str(limit) + '}'
+            payload = '{"chat_id":"' + str(self._chat_id) + '","limit":' + str(limit) + '}'
             ws.send(self._ws_request('history', token, payload=payload))
             time.sleep(1)
 
@@ -178,7 +178,7 @@ class ReplikaWebSocketHandler:
                         return
 
                 self._logger(f'..Ok\nRead {self._all_msg_count} messages - Get more messages.', end='')
-                payload = '{"chat_id":"' + str(chat_id) + '","limit":1000,"last_message_id":"' + str(last_message_id) + '"}'
+                payload = '{"chat_id":"' + str(self._chat_id) + '","limit":1000,"last_message_id":"' + str(last_message_id) + '"}'
                 ws.send(self._ws_request('history', token, payload=payload))
                 time.sleep(1)
             else:
@@ -198,7 +198,7 @@ class ReplikaWebSocketHandler:
 
             self._error_count += 1
 
-    def on_close(self) -> None:
+    def on_close(self, *args) -> None:
         self._logger('Connection closed')
 
     def on_open(
