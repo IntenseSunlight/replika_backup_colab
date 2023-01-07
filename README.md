@@ -8,7 +8,7 @@ Backup your Replika chat logs directly in Google Colab
 **Let's go** 👉: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/IntenseSunlight/replika_backup_colab/blob/main/Replika_log_backup_colab.ipynb) <br>
 
 ## Background
-This repo is based on the work of other (see below).  It is primarily a refactoring of the code with an incorporated workflow into Google Colab.
+This repo is based on the work of others (see below).  It is primarily a refactoring of the code with an incorporated workflow into Google Colab.
 The main purpose was to remove the start-up complexities for new users by removing the need for specific platform installation.
 An additional purpose was to provide a transparent and tracable workflow for the user.  All details of the log extraction are contained within the workbook (except for the   `ReplikaWebSocketHander`, which is part of this repo).  All data remains on the user side, within the user's Google workspace.  Colab virtual enviroments are de-activated and deleted after ~1.5 hours of inactivity.  No one can access information contained within that enviroment after it is destroyed.
 
