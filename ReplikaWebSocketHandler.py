@@ -141,15 +141,15 @@ class ReplikaWebSocketHandler:
 
                     if self._limitdate and (date_parse(message['timestamp']) <= self._limitdate):
                         ws.close()
-                        self._logger(f'..reached date limit\n\nBacked up {self._all_msg_count} messages') 
+                        self._logger(f'..reached date limit\n\nBacked up {self._all_msg_count} messages' +
+                            ' to date=' + str(self._limitdate))
                         return
 
                     last_message_id = message['id']
 
                     if last_message_id == self._lastmsgid:
                         ws.close()
-                        self._logger(f'..reached last message id\n\nBacked up {self._all_msg_count} messages' +
-                            ' to date=' + str(self._limitdate))
+                        self._logger(f'..reached last message id\n\nBacked up {self._all_msg_count} messages') 
                         return
                     else:
                         self._msg_count += 1
@@ -226,8 +226,8 @@ if __name__ == "__main__":
     #limitmsgs = 20              # backup this number of messages
     limitmsgs = None             # default is backup all
 
-    lastmsgid = '12345fddb1f23456789ef123'
-    #lastmsgid = None
+    #lastmsgid = '12345fddb1f23456789ef123'
+    lastmsgid = None
 
     # ---------- don't edit anything below -----------
 
