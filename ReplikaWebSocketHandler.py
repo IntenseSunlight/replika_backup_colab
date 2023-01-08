@@ -19,6 +19,7 @@ class ReplikaWebSocketHandler:
         chat_id: str=None,                # backup, not usually needed
         limitmsgs: Union[bool, int]=None, # False or number of messages
         limitdate: Union[bool, str]=None, # False or string date time (e.g. '2022-10-31')
+        lastmsgid: str=None,              # Last message id
         logger: Callable=print            # logging function
     ):
         self._logger = logger
@@ -40,7 +41,7 @@ class ReplikaWebSocketHandler:
                 self._logger("Invalid limit date specified; could not parse:", limitdate)
                 raise(e)
 
-        self._last_file_id = ""
+        self._lastmsgid = lastmsgid
         self._msg_count = 0
         self._all_msg_count = 0
     
@@ -114,8 +115,6 @@ class ReplikaWebSocketHandler:
             if self._limitmsgs:
                 if self._limitmsgs < 1000:
                     limit = self._limitmsgs
-            elif self._last_file_id:
-                limit = 5
 
             payload = '{"chat_id":"' + str(self._chat_id) + '","limit":' + str(limit) + '}'
             ws.send(self._ws_request('history', token, payload=payload))
@@ -142,14 +141,15 @@ class ReplikaWebSocketHandler:
 
                     if self._limitdate and (date_parse(message['timestamp']) <= self._limitdate):
                         ws.close()
-                        self._logger(f'..reached date limit\n\nBacked up {self._all_msg_count} messages' +
-                            ' to limitdate=' + str(self._limitdate))
+                        self._logger(f'..reached date limit\n\nBacked up {self._all_msg_count} messages') 
                         return
 
                     last_message_id = message['id']
 
-                    if last_message_id == self._last_file_id:
+                    if last_message_id == self._lastmsgid:
                         ws.close()
+                        self._logger(f'..reached last message id\n\nBacked up {self._all_msg_count} messages' +
+                            ' to date=' + str(self._limitdate))
                         return
                     else:
                         self._msg_count += 1
@@ -215,7 +215,7 @@ if __name__ == "__main__":
     init = '{"event_name":"init","payload":{"device_id":"1C2e456C-6789-0BD0-1234-123FB0E12345","user_id":"123ea45678e9012345a1f2c3","auth_token":"bb123456-dff1-123d-0daf-01b12a3eec45","security_token":"asgjkadjlbkjakdlfjgkasdkfhairqijkajskfdjaklsjkbhkahskjdkfmkjre1423vajkdjf1234asdfjadfjakbjakbhafaalkbhkahsdjrkjmvvajskdjfaksjdfjadfavaeriajvasdfailljkjkjkaljsdmmmllkkiikll=","time_zone":"2022-10-31T00:00:00.0+00:00","unity_bundle_version":160,"device":"web","platform":"web","platform_version":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/100.00 (KHTML, like Gecko) Chrome/100.0.0.0 Safari/100.00","app_version":"2.2.22","capabilities":["new_mood_titles","widget.multiselect","widget.scale","widget.titled_text_field","widget.new_onboarding","widget.app_navigation","message.achievement","widget.mission_recommendation","journey2.daily_mission_activity","journey2.replika_phrases","new_payment_subscriptions","navigation.relationship_settings","avatar","diaries.images","save_chat_items","wallet","store.dialog_items","subscription_popup","chat_suggestions","sale_screen","3d_customization","3d_customization_v2","3d_customization_v3","store_customization","blurred_messages","item_daily_reward","romantic_photos"]},"token":"1234eb1d-e1c0-123c-56a4-789012abca4d","auth":{"user_id":"1234567890e1234567a1f2c3","auth_token":"bb123456-dff1-123d-0daf-01b12a3eec45","device_id":"1C2e456C-6789-0BD0-1234-123FB0E12345"}}'
 
     # Only left for fallback, you shouldn't need it any longer (this hex number should be always user_id - 1).
-    chat_id = ''  
+    chat_id = ''
 
     # filename for chat log
     file_name = 'chat_backup'  # Default backup filename between single quotes, you can also use the -f parameter
@@ -225,6 +225,9 @@ if __name__ == "__main__":
 
     #limitmsgs = 20              # backup this number of messages
     limitmsgs = None             # default is backup all
+
+    lastmsgid = '12345fddb1f23456789ef123'
+    #lastmsgid = None
 
     # ---------- don't edit anything below -----------
 
@@ -236,6 +239,7 @@ if __name__ == "__main__":
             init=init,
             limitdate=limitdate,
             limitmsgs=limitmsgs,
+            lastmsgid=lastmsgid,
             writer=writer.writerow,
             logger=print
         )
